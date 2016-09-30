@@ -16,26 +16,26 @@ class Preferences: NSObject {
 	static let dateDidChangeNotificationName = "Preferences.dateDidChangeNotification"
 	private static let dateKey = "Date2"
 
-	var date: NSDate? {
+	var date: Date? {
 		get {
-			let timestamp = defaults?.objectForKey(self.dynamicType.dateKey) as? NSTimeInterval
-			return timestamp.map { NSDate(timeIntervalSince1970: $0) }
+			let timestamp = defaults?.object(forKey: type(of: self).dateKey) as? TimeInterval
+			return timestamp.map { Date(timeIntervalSince1970: $0) }
 		}
 
 		set {
 			if let date = newValue {
-				defaults?.setObject(date.timeIntervalSince1970, forKey: self.dynamicType.dateKey)
+				defaults?.set(date.timeIntervalSince1970, forKey: type(of: self).dateKey)
 			} else {
-				defaults?.removeObjectForKey(self.dynamicType.dateKey)
+				defaults?.removeObject(forKey: type(of: self).dateKey)
 			}
 			defaults?.synchronize()
 
-			NSNotificationCenter.defaultCenter().postNotificationName(self.dynamicType.dateDidChangeNotificationName, object: newValue)
+			NotificationCenter.default.post(name: Notification.Name(rawValue: type(of: self).dateDidChangeNotificationName), object: newValue)
 		}
 	}
 
 	private let defaults: ScreenSaverDefaults? = {
-		let bundleIdentifier = NSBundle(forClass: Preferences.self).bundleIdentifier
+		let bundleIdentifier = Bundle(for: Preferences.self).bundleIdentifier
 		return bundleIdentifier.flatMap { ScreenSaverDefaults(forModuleWithName: $0) }
 	}()
 }

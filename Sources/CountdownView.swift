@@ -10,15 +10,15 @@ import Foundation
 import ScreenSaver
 
 class CountdownView: ScreenSaverView {
-
+    
 	// MARK: - Properties
-
+    
 	private let placeholderLabel: Label = {
 		let view = Label()
 		view.translatesAutoresizingMaskIntoConstraints = false
 		view.stringValue = "Open Screen Saver Options to set your date."
-		view.textColor = .whiteColor()
-		view.hidden = true
+		view.textColor = .white
+		view.isHidden = true
 		return view
 	}()
 
@@ -53,7 +53,7 @@ class CountdownView: ScreenSaverView {
 	private let placesView: NSStackView = {
 		let view = NSStackView()
 		view.translatesAutoresizingMaskIntoConstraints = false
-		view.hidden = true
+		view.isHidden = true
 		return view
 	}()
 
@@ -61,17 +61,16 @@ class CountdownView: ScreenSaverView {
 		return ConfigurationWindowController()
 	}()
 
-	private var date: NSDate? {
+	private var date: Date? {
 		didSet {
 			updateFonts()
 		}
 	}
 
-
 	// MARK: - Initializers
 
 	convenience init() {
-		self.init(frame: CGRectZero, isPreview: false)
+		self.init(frame: CGRect.zero, isPreview: false)
 	}
 
 	override init!(frame: NSRect, isPreview: Bool) {
@@ -85,22 +84,22 @@ class CountdownView: ScreenSaverView {
 	}
 
 	deinit {
-		NSNotificationCenter.defaultCenter().removeObserver(self)
+		NotificationCenter.default.removeObserver(self)
 	}
 	
 
 	// MARK: - NSView
 
-	override func drawRect(rect: NSRect) {
-		let backgroundColor: NSColor = .blackColor()
+	override func draw(_ rect: NSRect) {
+		let backgroundColor: NSColor = .black
 
 		backgroundColor.setFill()
-		NSBezierPath.fillRect(bounds)
+		NSBezierPath.fill(bounds)
 	}
 
 	// If the screen saver changes size, update the font
-	override func resizeWithOldSuperviewSize(oldSize: NSSize) {
-		super.resizeWithOldSuperviewSize(oldSize)
+	override func resize(withOldSuperviewSize oldSize: NSSize) {
+		super.resize(withOldSuperviewSize: oldSize)
 		updateFonts()
 	}
 
@@ -108,19 +107,33 @@ class CountdownView: ScreenSaverView {
 	// MARK: - ScreenSaverView
 
 	override func animateOneFrame() {
-		placeholderLabel.hidden = date != nil
-		placesView.hidden = !placeholderLabel.hidden
+		placeholderLabel.isHidden = date != nil
+		placesView.isHidden = !placeholderLabel.isHidden
 
 		guard let date = date else { return }
 
-		let units: NSCalendarUnit = [.Day, .Hour, .Minute, .Second]
-		let now = NSDate()
-		let components = NSCalendar.currentCalendar().components(units, fromDate: now, toDate: date, options: [])
-
-		daysView.textLabel.stringValue = String(format: "%02d", abs(components.day))
-		hoursView.textLabel.stringValue = String(format: "%02d", abs(components.hour))
-		minutesView.textLabel.stringValue = String(format: "%02d", abs(components.minute))
-		secondsView.textLabel.stringValue = String(format: "%02d", abs(components.second))
+		let now = Date()
+        let day, hours, minutes, seconds: Int32
+        
+        if date.timeIntervalSince(now) <= 0 {
+            day = 0
+            hours = 0
+            minutes = 0
+            seconds = 0
+        } else {
+            let components: Set<Calendar.Component> = [.day, .hour, .minute, .second]
+            let dateComponents = Calendar.current.dateComponents(components, from: now, to: date)
+            
+            day = Int32(dateComponents.day!)
+            hours = Int32(dateComponents.hour!)
+            minutes = Int32(dateComponents.minute!)
+            seconds = Int32(dateComponents.second!)
+        }
+        
+        daysView.textLabel.stringValue = String(format: "%02d", day)
+        hoursView.textLabel.stringValue = String(format: "%02d", hours)
+        minutesView.textLabel.stringValue = String(format: "%02d", minutes)
+        secondsView.textLabel.stringValue = String(format: "%02d", seconds)
 	}
 
 	override func hasConfigureSheet() -> Bool {
@@ -131,7 +144,6 @@ class CountdownView: ScreenSaverView {
 		return configurationWindowController.window
 	}
 	
-
 	// MARK: - Private
 
 	/// Shared initializer
@@ -140,7 +152,7 @@ class CountdownView: ScreenSaverView {
 		animationTimeInterval = 1 / 30
 
 		// Recall preferences
-		date = Preferences().date
+		date = Preferences().date as Date?
 
 		// Setup the views
 		addSubview(placeholderLabel)
@@ -154,25 +166,25 @@ class CountdownView: ScreenSaverView {
 		updateFonts()
 
 		addConstraints([
-			placeholderLabel.centerXAnchor.constraintEqualToAnchor(centerXAnchor),
-			placeholderLabel.centerYAnchor.constraintEqualToAnchor(centerYAnchor),
+			placeholderLabel.centerXAnchor.constraint(equalTo: centerXAnchor),
+			placeholderLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
 
-			placesView.centerXAnchor.constraintEqualToAnchor(centerXAnchor),
-			placesView.centerYAnchor.constraintEqualToAnchor(centerYAnchor)
+			placesView.centerXAnchor.constraint(equalTo: centerXAnchor),
+			placesView.centerYAnchor.constraint(equalTo: centerYAnchor)
 		])
 
 		// Listen for configuration changes
-		NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(dateDidChange), name: Preferences.dateDidChangeNotificationName, object: nil)
+		NotificationCenter.default.addObserver(self, selector: #selector(dateDidChange), name: NSNotification.Name(rawValue: Preferences.dateDidChangeNotificationName), object: nil)
 	}
 
 	/// Age calculation
-	private func ageFordate(date: NSDate) -> Double {
+	private func ageFordate(_ date: Date) -> Double {
 		return 0
 	}
 
 	/// date changed
-	@objc private func dateDidChange(notification: NSNotification?) {
-		date = Preferences().date
+	@objc private func dateDidChange(_ notification: Notification?) {
+		date = Preferences().date as Date?
 	}
 
 	/// Update the font for the current size
@@ -192,12 +204,12 @@ class CountdownView: ScreenSaverView {
 	}
 
 	/// Get a font
-	private func fontWithSize(fontSize: CGFloat, weight: CGFloat = NSFontWeightThin, monospace: Bool = true) -> NSFont {
-		let font = NSFont.systemFontOfSize(fontSize, weight: weight)
+	private func fontWithSize(_ fontSize: CGFloat, weight: CGFloat = NSFontWeightThin, monospace: Bool = true) -> NSFont {
+		let font = NSFont.systemFont(ofSize: fontSize, weight: weight)
 
 		let fontDescriptor: NSFontDescriptor
 		if monospace {
-			fontDescriptor = font.fontDescriptor.fontDescriptorByAddingAttributes([
+			fontDescriptor = font.fontDescriptor.addingAttributes([
 				NSFontFeatureSettingsAttribute: [
 					[
 						NSFontFeatureTypeIdentifierKey: kNumberSpacingType,
