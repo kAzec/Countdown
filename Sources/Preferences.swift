@@ -19,7 +19,7 @@ class Preferences: NSObject {
 	var date: Date? {
 		get {
 			let timestamp = defaults?.object(forKey: type(of: self).dateKey) as? TimeInterval
-			return timestamp.map { Date(timeIntervalSince1970: $0) }
+			return timestamp.map(Date.init(timeIntervalSince1970:))
 		}
 
 		set {
@@ -36,6 +36,6 @@ class Preferences: NSObject {
 
 	private let defaults: ScreenSaverDefaults? = {
 		let bundleIdentifier = Bundle(for: Preferences.self).bundleIdentifier
-		return bundleIdentifier.flatMap { ScreenSaverDefaults(forModuleWithName: $0) }
+		return bundleIdentifier.flatMap(ScreenSaverDefaults.init(forModuleWithName:))
 	}()
 }

@@ -14,8 +14,8 @@ class ConfigurationWindowController: NSWindowController {
     
 	// MARK: - NSWindowController
 
-	override var windowNibName: String {
-		return "Configuration"
+	override var windowNibName: NSNib.Name? {
+		return .init("Configuration")
 	}
 
 	// MARK: - Action
